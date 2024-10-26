@@ -6,6 +6,7 @@
 #include "driver/gpio.h"
 #include "wifi_manager.h"
 #include "config.h"
+#include "http_client.h"
 
 void app_main() {
     esp_err_t ret = nvs_flash_init();  // key-value pair memory
@@ -19,4 +20,7 @@ void app_main() {
     ESP_LOGI("APP_MAIN", "ESP_WIFI_INIT");
     
     wifi_init_sta();
+
+    char* url = "http://www.onet.pl";
+    get_request(url);
 }
