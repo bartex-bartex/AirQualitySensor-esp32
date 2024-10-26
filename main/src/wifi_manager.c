@@ -1,39 +1,21 @@
 #include <stdio.h>
-#include "esp_err.h"
-#include "nvs_flash.h"
 #include "esp_wifi.h"
 #include "esp_log.h"
 #include "driver/gpio.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "wifi_manager.h"
+#include "config.h"
+#include "esp_mac.h"
+#include "led_manager.h"
 
-#define WIFI_FAIL_BIT BIT0
-#define WIFI_CONNECTED_BIT BIT1
-
-#define SSID "Galaxy M21CABD"
-#define PASS "poreba12"
-#define MAX_RETRY 255
-
-#define BLINK_GPIO 2
-
+// static -> not accessible outside this file
 static bool isConnected = false;
 static bool wasConnected = false;
-static EventGroupHandle_t s_wifi_event_group; // static = accessible only in this file
-// static uint8_t ucParametersToPass;
+static EventGroupHandle_t s_wifi_event_group;
 static TaskHandle_t xBlinkHandle = NULL;
 
-
-void blink_led(void* pvParameters){
-    gpio_reset_pin(BLINK_GPIO);
-    gpio_set_direction(BLINK_GPIO, GPIO_MODE_OUTPUT);
-
-    while (true){
-        gpio_set_level(BLINK_GPIO, 1);
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
-        gpio_set_level(BLINK_GPIO, 0);
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
-    }
-}
-
-static void event_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data){
+void wifi_event_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data){
 
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START)
     {
@@ -86,8 +68,8 @@ void wifi_init_sta(){
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));                // initialize wifi driver with config
 
     // registering events
-    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL));
-    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &wifi_event_handler, NULL));
 
     // create wifi config 
     // for some reason it is tough to pass |const char*|, best way is to use memcpy / strcpy
@@ -110,18 +92,4 @@ void wifi_init_sta(){
     } else {
         ESP_LOGI("WIFI_INIT_STA", "Failed to connect to SSID:%s, password:%s", SSID, PASS);
     }
-}
-
-void app_main() {
-    esp_err_t ret = nvs_flash_init();  // key-value pair memory
-    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-        ESP_ERROR_CHECK(nvs_flash_erase());
-        ret = nvs_flash_init();
-    }
-
-    ESP_ERROR_CHECK(ret); // call abort when not ESP_OK
-
-    ESP_LOGI("APP_MAIN", "ESP_WIFI_INIT");
-
-    wifi_init_sta();
 }
