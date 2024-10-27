@@ -8,6 +8,9 @@
 #include "config.h"
 #include "http_client.h"
 
+// only http -> port 80
+char* url = "http://example.com/";
+
 void app_main() {
     esp_err_t ret = nvs_flash_init();  // key-value pair memory
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
@@ -19,8 +22,8 @@ void app_main() {
 
     ESP_LOGI("APP_MAIN", "ESP_WIFI_INIT");
     
+    // blocking call - until IP is obtained via DHCP
     wifi_init_sta();
 
-    char* url = "http://www.onet.pl";
     get_request(url);
 }

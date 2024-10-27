@@ -53,6 +53,7 @@ void wifi_event_handler(void* arg, esp_event_base_t event_base, int32_t event_id
     {
         ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
         ESP_LOGI("EVENT_HANDLER", "got ip:" IPSTR, IP2STR(&event->ip_info.ip));
+        xEventGroupSetBits(s_wifi_event_group, WIFI_GOT_IP_BIT);
     }
 }
 
@@ -85,10 +86,12 @@ void wifi_init_sta(){
     ESP_ERROR_CHECK(esp_wifi_start()); // start wifi
 
     // best way to wait for event is to use event group
-    EventBits_t bits = xEventGroupWaitBits(s_wifi_event_group, WIFI_CONNECTED_BIT, pdFALSE, pdTRUE, portMAX_DELAY);
+    EventBits_t bits = xEventGroupWaitBits(s_wifi_event_group, WIFI_CONNECTED_BIT | WIFI_GOT_IP_BIT, pdFALSE, pdTRUE, portMAX_DELAY);
 
     if (bits & WIFI_CONNECTED_BIT){
         ESP_LOGI("WIFI_INIT_STA", "connected to ap SSID:%s password:%s", SSID, PASS);
+    } if (bits & WIFI_GOT_IP_BIT){
+        ESP_LOGI("WIFI_INIT_STA", "got ip");
     } else {
         ESP_LOGI("WIFI_INIT_STA", "Failed to connect to SSID:%s, password:%s", SSID, PASS);
     }
