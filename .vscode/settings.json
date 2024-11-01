@@ -17,6 +17,20 @@
     "idf.portWin": "COM3",
     "files.associations": {
         "*.asm": "asm-intel-x86-generic",
-        "esp_http_client.h": "c"
+        "esp_http_client.h": "c",
+        "array": "c",
+        "deque": "c",
+        "list": "c",
+        "string": "c",
+        "unordered_map": "c",
+        "vector": "c",
+        "string_view": "c",
+        "format": "c",
+        "initializer_list": "c",
+        "span": "c",
+        "regex": "c",
+        "esp_log.h": "c",
+        "esp_spiffs.h": "c",
+        "sdkconfig.h": "c"
     }
 }

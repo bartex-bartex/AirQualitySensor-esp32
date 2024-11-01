@@ -7,8 +7,9 @@
             "includePath": [
                 "${config:idf.espIdfPath}/components/**",
                 "${config:idf.espIdfPathWin}/components/**",
-                "${workspaceFolder}/include/**",
-                "${workspaceFolder}/src/**",
+                "${workspaceFolder}/build/config",  // Path to sdkconfig.h
+                "${workspaceFolder}/main/include/**",
+                "${workspaceFolder}/main/src/**"
             ],
             "browse": {
                 "path": [

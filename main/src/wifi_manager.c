@@ -6,11 +6,10 @@
 #include "freertos/task.h"
 #include "wifi_manager.h"
 #include "config.h"
-#include "esp_mac.h"
 #include "led_manager.h"
 
 // static -> not accessible outside this file
-static bool isConnected = false;
+static volatile bool isConnected = false;
 static bool wasConnected = false;
 static EventGroupHandle_t s_wifi_event_group;
 static TaskHandle_t xBlinkHandle = NULL;
@@ -34,6 +33,7 @@ void wifi_event_handler(void* arg, esp_event_base_t event_base, int32_t event_id
             gpio_reset_pin(BLINK_GPIO);
             xBlinkHandle = NULL;
         }
+        
         xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
     } 
     else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED)
