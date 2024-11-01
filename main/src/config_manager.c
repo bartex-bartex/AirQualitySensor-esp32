@@ -2,7 +2,20 @@
 #include "esp_spiffs.h"
 #include "esp_log.h"
 
-bool config_init(wifi_config* config) {
+#define WIFI_SSID_MAX_LEN 64
+#define WIFI_PASS_MAX_LEN 64
+
+static const char* TAG = "CONFIG_MANAGER";
+
+// Define the struct to hold Wi-Fi credential data
+typedef struct {
+    char* ssid;
+    char* pass;
+} wifi_config;
+
+static wifi_config config = {NULL, NULL};
+
+bool config_init() {
     esp_err_t ret;
 
     // Configuration for SPIFFS
@@ -16,17 +29,40 @@ bool config_init(wifi_config* config) {
     // Initialize SPIFFS
     ret = esp_vfs_spiffs_mount(&conf);
     if (ret != ESP_OK) {
-        ESP_LOGI("CONFIG_INIT", "Failed to mount file system, error: %s", esp_err_to_name(ret));
+        ESP_LOGI(TAG, "Failed to mount file system, error: %s", esp_err_to_name(ret));
         return false; // Mount failed
     }
 
-    config->ssid = (char*)malloc(64);
-    config->pass = (char*)malloc(64);
+    // Allocate memory for ssid and pass fields
+    config.ssid = (char*)malloc(WIFI_SSID_MAX_LEN);
+    config.pass = (char*)malloc(WIFI_PASS_MAX_LEN);
 
+    if (config.ssid == NULL || config.pass == NULL) {
+        ESP_LOGE(TAG, "Memory allocation failed");
+        // Free any allocated memory in case of failure
+        config_cleanup();
+        return false;
+    }
+
+    // Optionally initialize to empty strings
+    config.ssid[0] = '\0';
+    config.pass[0] = '\0';
+
+    ESP_LOGI(TAG, "Configuration initialized successfully");
     return true; // Mount successful
 }
 
-void config_cleanup(wifi_config* config) {
-    free(config->ssid);
-    free(config->pass);
+void config_cleanup() {
+    // Unmount SPIFFS if mounted
+    esp_vfs_spiffs_unmount(NULL);
+
+    // Free allocated memory
+    if (config.ssid) {
+        free(config.ssid);
+        config.ssid = NULL;
+    }
+    if (config.pass) {
+        free(config.pass);
+        config.pass = NULL;
+    }
 }

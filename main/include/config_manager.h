@@ -3,19 +3,17 @@
 
 #include <stdbool.h>
 
-// Define the struct to hold Wi-Fi credential data
-typedef struct {
-    char* ssid;
-    char* pass;
-} wifi_config;
-
 // Initialization and Cleanup
-bool config_init(wifi_config* config);
-void config_cleanup(wifi_config* config);
+bool config_init();
+void config_cleanup();
 
 // Loading, Saving, and Resetting Configuration
-bool wifi_config_load(wifi_config* config);
-bool wifi_config_save(wifi_config* config);
+bool wifi_config_load();
+bool wifi_config_save(const char* ssid, const char* pass);
+
+// Getters
+const char* wifi_config_get_ssid(void);
+const char* wifi_config_get_pass(void);
 
 #endif // CONFIG_MANAGER_H
 
