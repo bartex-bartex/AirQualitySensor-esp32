@@ -27,7 +27,7 @@ bool config_init() {
     };
 
     // Initialize SPIFFS
-    ret = esp_vfs_spiffs_mount(&conf);
+    ret = esp_vfs_spiffs_register(&conf);
     if (ret != ESP_OK) {
         ESP_LOGI(TAG, "Failed to mount file system, error: %s", esp_err_to_name(ret));
         return false; // Mount failed
@@ -54,7 +54,7 @@ bool config_init() {
 
 void config_cleanup() {
     // Unmount SPIFFS if mounted
-    esp_vfs_spiffs_unmount(NULL);
+    esp_vfs_spiffs_unregister(NULL);
 
     // Free allocated memory
     if (config.ssid) {
