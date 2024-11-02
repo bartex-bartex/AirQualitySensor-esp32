@@ -8,12 +8,12 @@ bool config_init();
 void config_cleanup();
 
 // Loading, Saving, and Resetting Configuration
-bool wifi_config_load();
-bool wifi_config_save(const char* ssid, const char* pass);
+bool config_wifi_load();
+bool config_wifi_save(const char* ssid, const char* pass);
 
 // Getters
-const char* wifi_config_get_ssid(void);
-const char* wifi_config_get_pass(void);
+const char* config_wifi_get_ssid(void);
+const char* config_wifi_get_pass(void);
 
 #endif // CONFIG_MANAGER_H
 

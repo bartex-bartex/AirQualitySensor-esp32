@@ -30,14 +30,14 @@ void app_main() {
 
     config_init();
 
-    wifi_config_save("My ssid", "My pass");
+    config_wifi_save("My ssid", "My pass");
 
-    if (!wifi_config_load()) {
+    if (!config_wifi_load()) {
         ESP_LOGI("APP_MAIN", "Failed to load Wi-Fi configuration");
     }
 
-    ESP_LOGI("APP_MAIN", "SSID: %s", wifi_config_get_ssid());
-    ESP_LOGI("APP_MAIN", "PASS: %s", wifi_config_get_pass());
+    ESP_LOGI("APP_MAIN", "SSID: %s", config_wifi_get_ssid());
+    ESP_LOGI("APP_MAIN", "PASS: %s", config_wifi_get_pass());
 
     config_cleanup();
 }

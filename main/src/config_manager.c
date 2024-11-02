@@ -70,7 +70,7 @@ void config_cleanup() {
     }
 }
 
-bool wifi_config_load() {
+bool config_wifi_load() {
     ESP_LOGI(TAG, "Loading Wi-Fi configuration");
 
     FILE* f = fopen(WIFI_CONFIG_FILE_PATH, "r");
@@ -131,7 +131,7 @@ bool wifi_config_load() {
     return true;
 }
 
-bool wifi_config_save(const char* ssid, const char* pass) {
+bool config_wifi_save(const char* ssid, const char* pass) {
     ESP_LOGI(TAG, "Saving Wi-Fi configuration");
 
     cJSON* json = cJSON_CreateObject();
@@ -158,10 +158,10 @@ bool wifi_config_save(const char* ssid, const char* pass) {
     return true;
 }
 
-const char* wifi_config_get_ssid(void) {
+const char* config_wifi_get_ssid(void) {
     return config.ssid;
 }
 
-const char* wifi_config_get_pass(void) {
+const char* config_wifi_get_pass(void) {
     return config.pass;
 }
