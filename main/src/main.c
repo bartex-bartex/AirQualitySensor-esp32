@@ -7,6 +7,7 @@
 #include "wifi_manager.h"
 #include "config.h"
 #include "http_client.h"
+#include "config_manager.h"
 
 // only http -> port 80
 char* url = "http://example.com/";
@@ -23,7 +24,20 @@ void app_main() {
     ESP_LOGI("APP_MAIN", "ESP_WIFI_INIT");
     
     // blocking call - until IP is obtained via DHCP
-    wifi_init_sta();
+    // wifi_init_sta();
 
-    get_request(url);
+    // get_request(url);
+
+    config_init();
+
+    wifi_config_save("My ssid", "My pass");
+
+    if (!wifi_config_load()) {
+        ESP_LOGI("APP_MAIN", "Failed to load Wi-Fi configuration");
+    }
+
+    ESP_LOGI("APP_MAIN", "SSID: %s", wifi_config_get_ssid());
+    ESP_LOGI("APP_MAIN", "PASS: %s", wifi_config_get_pass());
+
+    config_cleanup();
 }

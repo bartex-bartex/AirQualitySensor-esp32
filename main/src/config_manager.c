@@ -1,7 +1,11 @@
+#include <string.h>
 #include "config_manager.h"
+#include "led_manager.h"
 #include "esp_spiffs.h"
 #include "esp_log.h"
+#include "cJSON.h"
 
+#define WIFI_CONFIG_FILE_PATH "/spiffs/wifi_config.json"
 #define WIFI_SSID_MAX_LEN 64
 #define WIFI_PASS_MAX_LEN 64
 
@@ -23,7 +27,7 @@ bool config_init() {
         .base_path = "/spiffs",    // Mount point
         .partition_label = NULL,   // Use the default partition
         .max_files = 5,            // Maximum number of open files
-        .format_if_mount_failed = false // Format if mount fails
+        .format_if_mount_failed = true // Format if mount fails
     };
 
     // Initialize SPIFFS
@@ -58,11 +62,106 @@ void config_cleanup() {
 
     // Free allocated memory
     if (config.ssid) {
-        free(config.ssid);
         config.ssid = NULL;
     }
     if (config.pass) {
         free(config.pass);
         config.pass = NULL;
     }
+}
+
+bool wifi_config_load() {
+    ESP_LOGI(TAG, "Loading Wi-Fi configuration");
+
+    FILE* f = fopen(WIFI_CONFIG_FILE_PATH, "r");
+    if (f == NULL) {
+        ESP_LOGE(TAG, "Failed to open file for reading");
+        return false;
+    }
+
+    fseek(f, 0, SEEK_END);
+    size_t size = ftell(f);
+    fseek(f, 0, SEEK_SET);
+
+    char* buffer = (char*)malloc(size + 1); // +1 for null termination
+    if (!buffer) {
+        ESP_LOGE(TAG, "Failed to allocate memory for buffer");
+        fclose(f);
+        return false;
+    }
+
+    ESP_LOGI(TAG, "File size: %d", size);
+
+    fread(buffer, 1, size, f);
+    buffer[size] = '\0'; // Null terminate the buffer
+    fclose(f);
+
+    ESP_LOGI(TAG, "File content: %s", buffer);
+
+    // Parse JSON
+    cJSON* json = cJSON_Parse(buffer);
+    free(buffer);
+    if (json == NULL) {
+        ESP_LOGE(TAG, "Failed to parse JSON");
+        return false;
+    }
+
+    // Extract SSID and password from the JSON object
+    cJSON* ssid_item = cJSON_GetObjectItem(json, "ssid");
+    cJSON* pass_item = cJSON_GetObjectItem(json, "pass");
+
+    if (cJSON_IsString(ssid_item) && (ssid_item->valuestring != NULL)) {
+        ESP_LOGI(TAG, "SSID: %s", ssid_item->valuestring);
+        strlcpy(config.ssid, ssid_item->valuestring, WIFI_SSID_MAX_LEN);
+    }
+
+    if (cJSON_IsString(pass_item) && (pass_item->valuestring != NULL)) {
+        ESP_LOGI(TAG, "Password: %s", pass_item->valuestring);
+        strlcpy(config.pass, pass_item->valuestring, WIFI_PASS_MAX_LEN);
+    }
+
+    cJSON_Delete(json); // Clean up the cJSON object
+
+    if (config.ssid[0] == '\0' || config.pass[0] == '\0') {
+        ESP_LOGE(TAG, "Failed to load Wi-Fi configuration");
+        return false;
+    }
+
+    ESP_LOGI("CONFIG", "Config loaded");
+    return true;
+}
+
+bool wifi_config_save(const char* ssid, const char* pass) {
+    ESP_LOGI(TAG, "Saving Wi-Fi configuration");
+
+    cJSON* json = cJSON_CreateObject();
+    cJSON_AddStringToObject(json, "ssid", ssid);
+    cJSON_AddStringToObject(json, "pass", pass);
+
+    char* json_str = cJSON_Print(json);
+    cJSON_Delete(json);
+
+    FILE* f = fopen(WIFI_CONFIG_FILE_PATH, "w");
+    if (f == NULL) {
+        ESP_LOGE(TAG, "Failed to open file for writing");
+        return false;
+    }
+
+    fwrite(json_str, 1, strlen(json_str), f);
+    fclose(f);
+    free(json_str);
+
+    strlcpy(config.ssid, ssid, sizeof(config.ssid));
+    strlcpy(config.pass, pass, sizeof(config.pass));
+
+    ESP_LOGI(TAG, "Config saved");
+    return true;
+}
+
+const char* wifi_config_get_ssid(void) {
+    return config.ssid;
+}
+
+const char* wifi_config_get_pass(void) {
+    return config.pass;
 }
