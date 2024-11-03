@@ -8,9 +8,12 @@
 #include "config.h"
 #include "http_client.h"
 #include "config_manager.h"
+#include "ble_manager.h"
 
 // only http -> port 80
 char* url = "http://example.com/";
+
+static const char *TAG = "APP_MAIN";
 
 void app_main() {
     esp_err_t ret = nvs_flash_init();  // key-value pair memory
@@ -21,23 +24,28 @@ void app_main() {
 
     ESP_ERROR_CHECK(ret); // call abort when not ESP_OK
 
-    ESP_LOGI("APP_MAIN", "ESP_WIFI_INIT");
+    ble_init();
+
+
+    // ESP_LOGI("APP_MAIN", "ESP_WIFI_INIT");
     
     // blocking call - until IP is obtained via DHCP
     // wifi_init_sta();
 
     // get_request(url);
 
-    config_init();
+    // config_init();
 
-    config_wifi_save("My ssid", "My pass");
+    // config_wifi_save("My ssid", "My pass");
 
-    if (!config_wifi_load()) {
-        ESP_LOGI("APP_MAIN", "Failed to load Wi-Fi configuration");
-    }
+    // if (!config_wifi_load()) {
+    //     ESP_LOGI("APP_MAIN", "Failed to load Wi-Fi configuration");
+    // }
 
-    ESP_LOGI("APP_MAIN", "SSID: %s", config_wifi_get_ssid());
-    ESP_LOGI("APP_MAIN", "PASS: %s", config_wifi_get_pass());
+    // ESP_LOGI("APP_MAIN", "SSID: %s", config_wifi_get_ssid());
+    // ESP_LOGI("APP_MAIN", "PASS: %s", config_wifi_get_pass());
 
-    config_cleanup();
+    // config_cleanup();
+
+
 }

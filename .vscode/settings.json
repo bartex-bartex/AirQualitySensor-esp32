@@ -40,6 +40,8 @@
         "*.inc": "c",
         "esp_attr.h": "c",
         "esp_bootloader_desc.h": "c",
-        "cjson.h": "c"
+        "cjson.h": "c",
+        "common.h": "c",
+        "esp_hidh_nimble.h": "c"
     }
 }
