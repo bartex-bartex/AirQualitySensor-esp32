@@ -24,8 +24,15 @@ void app_main() {
 
     ESP_ERROR_CHECK(ret); // call abort when not ESP_OK
 
+    config_init();
     ble_init();
 
+    while (1) {
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+
+        ESP_LOGI(TAG, "value %s", config_wifi_get_ssid());
+        ESP_LOGI(TAG, "value %s", config_wifi_get_pass());
+    }
 
     // ESP_LOGI("APP_MAIN", "ESP_WIFI_INIT");
     

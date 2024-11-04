@@ -9,9 +9,10 @@
 
 #include "ble_manager.h"
 #include "gap.h"
+#include "gatt_svc.h"
 #include "sdkconfig.h"
 
-const char* TAG = "BLE_MANAGER";
+static const char* TAG = "BLE_MANAGER";
 
 // Function prototypes for static functions
 static void on_stack_reset(int reason);
@@ -36,6 +37,13 @@ bool ble_init() {
     rc = gap_init();
     if (rc != 0) {
         ESP_LOGE(TAG, "failed to initialize GAP service, error code: %d", rc);
+        return false;
+    }
+
+    /* GATT server initialization */
+    rc = gatt_svc_init();
+    if (rc != 0) {
+        ESP_LOGE(TAG, "failed to initialize GATT server, error code: %d", rc);
         return false;
     }
 

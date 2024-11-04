@@ -22,9 +22,11 @@
 #include "nimble/nimble_port_freertos.h"
 
 #include "gap.h"
+#include "gatt_svc.h"
 
-#define TAG "GAP"
 #define DEVICE_NAME "My ESP32 Beacon"
+
+const char* TAG = "GAP";
 
 /* Private function declarations */
 inline static void format_addr(char *addr_str, uint8_t addr[]);
@@ -169,7 +171,7 @@ static int gap_event_handler(struct ble_gap_event *event, void *arg) {
                 return rc;
             }
 
-            /* Print connection descriptor and turn on the LED */
+            /* Print connection descriptor */
             print_conn_desc(&desc);
 
             /* Try to update connection parameters */
@@ -217,6 +219,22 @@ static int gap_event_handler(struct ble_gap_event *event, void *arg) {
             return rc;
         }
         print_conn_desc(&desc);
+        return rc;
+
+    /* Advertising complete event */
+    case BLE_GAP_EVENT_ADV_COMPLETE:
+        /* Advertising completed, restart advertising */
+        ESP_LOGI(TAG, "advertise complete; reason=%d",
+                 event->adv_complete.reason);
+        start_advertising();
+        return rc;
+
+    /* MTU update event */
+    case BLE_GAP_EVENT_MTU:
+        /* Print MTU update info to log */
+        ESP_LOGI(TAG, "mtu update event; conn_handle=%d cid=%d mtu=%d",
+                 event->mtu.conn_handle, event->mtu.channel_id,
+                 event->mtu.value);
         return rc;
     }
 
