@@ -49,7 +49,7 @@ void app_main() {
 
         xTaskCreate(nimble_host_task, "NimBLE", 4096, NULL, 5, &xBleHandle);
 
-        vTaskDelay(10000 / portTICK_PERIOD_MS);
+        vTaskDelay(45000 / portTICK_PERIOD_MS);
 
         nimble_host_stop_task();
 
@@ -58,7 +58,6 @@ void app_main() {
         // vTaskDelete(xBleHandle);
     }
 
-    // vTaskDelete(xBleHandle);
     xBleHandle = NULL;
 
     config_cleanup();

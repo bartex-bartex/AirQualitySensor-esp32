@@ -134,6 +134,8 @@ bool config_wifi_load() {
 bool config_wifi_save(const char* ssid, const char* pass) {
     ESP_LOGI(TAG, "Saving Wi-Fi configuration");
 
+    ESP_LOGI(TAG, "Before | SSID: %s, Password: %s", ssid, pass);
+
     cJSON* json = cJSON_CreateObject();
     cJSON_AddStringToObject(json, "ssid", ssid);
     cJSON_AddStringToObject(json, "pass", pass);
@@ -151,8 +153,12 @@ bool config_wifi_save(const char* ssid, const char* pass) {
     fclose(f);
     free(json_str);
 
-    strlcpy(config.ssid, ssid, sizeof(config.ssid));
-    strlcpy(config.pass, pass, sizeof(config.pass));
+    ESP_LOGI(TAG, "SSID size: %d, Password size: %d", strlen(ssid), strlen(pass));
+
+    strlcpy(config.ssid, ssid, strlen(ssid) + 1);
+    strlcpy(config.pass, pass, strlen(pass) + 1);
+
+    ESP_LOGI(TAG, "After | SSID: %s, Password: %s", config.ssid, config.pass);
 
     ESP_LOGI(TAG, "Config saved");
     return true;
