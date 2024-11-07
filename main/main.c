@@ -34,6 +34,7 @@ void app_main() {
     
     wifi_init_sta();
 
+    bool connected = false;
     const char* ssid;
     const char* pass;
 
@@ -43,7 +44,11 @@ void app_main() {
         pass = config_wifi_get_pass();
 
         ESP_LOGI(TAG, "SSID: %s, PASS: %s", ssid, pass);
-        wifi_connect(ssid, pass);
+        connected = wifi_connect(ssid, pass);
+        if (connected) {
+            ESP_LOGI(TAG, "Connected to Wi-Fi");
+            break;
+        }
 
         ble_init();
 
@@ -52,13 +57,7 @@ void app_main() {
         vTaskDelay(45000 / portTICK_PERIOD_MS);
 
         nimble_host_stop_task();
-
-        vTaskDelay(10000 / portTICK_PERIOD_MS);
-
-        // vTaskDelete(xBleHandle);
     }
-
-    xBleHandle = NULL;
 
     config_cleanup();
 }
