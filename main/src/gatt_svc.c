@@ -5,10 +5,11 @@
 #include "nimble/ble.h"
 #include "nimble/nimble_port.h"
 #include "nimble/nimble_port_freertos.h"
+#include "cJSON.h"
+#include "esp_bt.h"
 
 #include "gatt_svc.h"
 #include "config_manager.h"
-#include "cJSON.h"
 
 #define WIFI_SSID_MAX_LEN 64
 #define WIFI_PASS_MAX_LEN 64
@@ -102,6 +103,8 @@ static void wifi_cred_chr_access(uint16_t conn_handle, uint16_t attr_handle,
             // ESP_LOGI(TAG, "Received SSID: %s, Password: %s", ssid, password);
 
             // Allocate a buffer to hold the incoming data
+            ESP_LOGI(TAG, "Received data length: %d", ctxt->om->om_len);
+
             char buffer[ctxt->om->om_len + 1]; // +1 for null-termination
             memcpy(buffer, ctxt->om->om_data, ctxt->om->om_len);
             buffer[ctxt->om->om_len] = '\0'; // Null-terminate the buffer
@@ -133,6 +136,8 @@ static void wifi_cred_chr_access(uint16_t conn_handle, uint16_t attr_handle,
             } else {
                 ESP_LOGE(TAG, "Password not found or not a string");
             }
+
+            config_wifi_save(ssid_item->valuestring, pass_item->valuestring);
 
             // Clean up the cJSON object
             cJSON_Delete(json);

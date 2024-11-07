@@ -17,7 +17,6 @@ static const char* TAG = "BLE_MANAGER";
 // Function prototypes for static functions
 static void on_stack_reset(int reason);
 static void on_stack_sync(void);
-static void nimble_host_task(void *param);
 
 bool ble_init() {
     esp_err_t ret;
@@ -56,10 +55,45 @@ bool ble_init() {
 
     /* Store host configuration */
     // ble_store_config_init(); // TODO: What about this
-    xTaskCreate(nimble_host_task, "NimBLE", 4096, NULL, 5, NULL);
 
     return true;
 }
+
+void nimble_host_task(void *param) {
+    /* Task entry log */
+    ESP_LOGI(TAG, "nimble host task has been started!");
+
+    /* This function won't return until nimble_port_stop() is executed */
+    nimble_port_run();
+
+    vTaskDelete(NULL);
+}
+
+void nimble_host_stop_task() {
+    ESP_LOGI(TAG, "Cleaning up NimBLE host stack");
+
+    // // NOT NEEDED
+    // ble_gap_adv_stop();
+
+    // for (int i = 0; i < BLE_MAX_CONNECTIONS; i++) {
+    //     if (ble_gap_conn_active(i)) {
+    //         ble_gap_terminate(i, BLE_ERR_REM_USER_CONN_TERM);
+    //         vTaskDelay(100 / portTICK_PERIOD_MS); // Ensure the termination is processed
+    //     }
+    // } 
+
+    /* Stop the NimBLE host */
+    nimble_port_stop();
+
+    nimble_port_deinit();
+    
+    ESP_LOGI(TAG, "NimBLE port deinit");
+
+    vTaskDelay(5000 / portTICK_PERIOD_MS);
+
+    ESP_LOGI(TAG, "NimBLE host stack has been cleaned up");
+}
+
 
 static void on_stack_reset(int reason) {
     /* On reset, print reset reason to console */
@@ -71,13 +105,3 @@ static void on_stack_sync(void) {
     adv_init();
 }
 
-static void nimble_host_task(void *param) {
-    /* Task entry log */
-    ESP_LOGI(TAG, "nimble host task has been started!");
-
-    /* This function won't return until nimble_port_stop() is executed */
-    nimble_port_run();
-
-    /* Clean up at exit */
-    vTaskDelete(NULL);
-}

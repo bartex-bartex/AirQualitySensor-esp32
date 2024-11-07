@@ -15,6 +15,8 @@ char* url = "http://example.com/";
 
 static const char *TAG = "APP_MAIN";
 
+static TaskHandle_t xBleHandle = NULL;
+
 void app_main() {
     esp_err_t ret = nvs_flash_init();  // key-value pair memory
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
@@ -25,34 +27,39 @@ void app_main() {
     ESP_ERROR_CHECK(ret); // call abort when not ESP_OK
 
     config_init();
-    ble_init();
+    config_wifi_load();
+
+    // ble_init();
+    // xTaskCreate(nimble_host_task, "NimBLE", 4096, NULL, 5, &xBleHandle);
+    
+    wifi_init_sta();
+
+    const char* ssid;
+    const char* pass;
 
     while (1) {
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        ESP_LOGI(TAG, "Update credentials");
+        ssid = config_wifi_get_ssid();
+        pass = config_wifi_get_pass();
 
-        ESP_LOGI(TAG, "value %s", config_wifi_get_ssid());
-        ESP_LOGI(TAG, "value %s", config_wifi_get_pass());
+        ESP_LOGI(TAG, "SSID: %s, PASS: %s", ssid, pass);
+        wifi_connect(ssid, pass);
+
+        ble_init();
+
+        xTaskCreate(nimble_host_task, "NimBLE", 4096, NULL, 5, &xBleHandle);
+
+        vTaskDelay(10000 / portTICK_PERIOD_MS);
+
+        nimble_host_stop_task();
+
+        vTaskDelay(10000 / portTICK_PERIOD_MS);
+
+        // vTaskDelete(xBleHandle);
     }
 
-    // ESP_LOGI("APP_MAIN", "ESP_WIFI_INIT");
-    
-    // blocking call - until IP is obtained via DHCP
-    // wifi_init_sta();
+    // vTaskDelete(xBleHandle);
+    xBleHandle = NULL;
 
-    // get_request(url);
-
-    // config_init();
-
-    // config_wifi_save("My ssid", "My pass");
-
-    // if (!config_wifi_load()) {
-    //     ESP_LOGI("APP_MAIN", "Failed to load Wi-Fi configuration");
-    // }
-
-    // ESP_LOGI("APP_MAIN", "SSID: %s", config_wifi_get_ssid());
-    // ESP_LOGI("APP_MAIN", "PASS: %s", config_wifi_get_pass());
-
-    // config_cleanup();
-
-
+    config_cleanup();
 }
