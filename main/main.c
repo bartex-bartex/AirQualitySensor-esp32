@@ -28,9 +28,6 @@ void app_main() {
 
     config_init();
     config_wifi_load();
-
-    // ble_init();
-    // xTaskCreate(nimble_host_task, "NimBLE", 4096, NULL, 5, &xBleHandle);
     
     wifi_init_sta();
 
@@ -58,6 +55,10 @@ void app_main() {
 
         nimble_host_stop_task();
     }
+    // TODO: Handle disconnection error
+    // TODO: Handle too fast request before getting IP assigned
+
+
 
     config_cleanup();
 }
