@@ -39,12 +39,10 @@ void app_main() {
 
         vTaskDelay(1000 / portTICK_PERIOD_MS);
     }
-    // TODO: Handle disconnection error
-    // TODO: Handle too fast request before getting IP assigned
 
     ESP_LOGI(TAG, "Connected to WiFi");
 
-    nimble_host_stop_task();
+    // nimble_host_stop_task();
 
     config_cleanup();
 }
