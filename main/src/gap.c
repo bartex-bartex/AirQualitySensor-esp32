@@ -228,6 +228,34 @@ static int gap_event_handler(struct ble_gap_event *event, void *arg) {
                  event->adv_complete.reason);
         // start_advertising();
         return rc;
+        
+    /* Notification sent event */
+    case BLE_GAP_EVENT_NOTIFY_TX:
+        if ((event->notify_tx.status != 0) &&
+            (event->notify_tx.status != BLE_HS_EDONE)) {
+            /* Print notification info on error */
+            ESP_LOGI(TAG,
+                     "notify event; conn_handle=%d attr_handle=%d "
+                     "status=%d is_indication=%d",
+                     event->notify_tx.conn_handle, event->notify_tx.attr_handle,
+                     event->notify_tx.status, event->notify_tx.indication);
+        }
+        return rc;
+
+    /* Subscribe event */
+    case BLE_GAP_EVENT_SUBSCRIBE:
+        /* Print subscription info to log */
+        ESP_LOGI(TAG,
+                 "subscribe event; conn_handle=%d attr_handle=%d "
+                 "reason=%d prevn=%d curn=%d previ=%d curi=%d",
+                 event->subscribe.conn_handle, event->subscribe.attr_handle,
+                 event->subscribe.reason, event->subscribe.prev_notify,
+                 event->subscribe.cur_notify, event->subscribe.prev_indicate,
+                 event->subscribe.cur_indicate);
+
+        /* GATT subscribe event callback */
+        gatt_svr_subscribe_cb(event);
+        return rc;
 
     /* MTU update event */
     case BLE_GAP_EVENT_MTU:

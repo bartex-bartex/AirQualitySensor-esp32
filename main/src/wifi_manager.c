@@ -12,7 +12,7 @@
 
 static const char* TAG = "WIFI_MANAGER";
 
-bool isConnected = false;
+volatile bool isConnected = false;
 static bool wasConnected = false;
 // static EventGroupHandle_t s_wifi_event_group;
 static TaskHandle_t xBlinkHandle = NULL;

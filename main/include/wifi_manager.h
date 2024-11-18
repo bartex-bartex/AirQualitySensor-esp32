@@ -5,7 +5,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/event_groups.h"
 
-extern bool isConnected;
+extern volatile bool isConnected;
 
 // Function declarations
 void wifi_init_sta(void);
