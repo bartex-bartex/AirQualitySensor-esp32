@@ -42,7 +42,12 @@ void app_main() {
 
     ESP_LOGI(TAG, "Connected to WiFi");
 
-    // nimble_host_stop_task();
+    // Main program loop
+    while (1){
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+    }
+
+    nimble_host_stop_task();
 
     config_cleanup();
 }

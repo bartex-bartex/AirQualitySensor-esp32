@@ -16,6 +16,7 @@
 #define WIFI_PASS_MAX_LEN 64
 
 static const char* TAG = "GATT_SVR";
+static TaskHandle_t xHeartIndicateTask = NULL;
 
 /* Private function declarations */
 static void wifi_cred_chr_access(uint16_t conn_handle, uint16_t attr_handle,
@@ -193,51 +194,16 @@ void send_heart_rate_indication(void) {
     }
 }
 
-// TODO: Should I delete this function?
-/*
- *  Handle GATT attribute register events
- *      - Service register event
- *      - Characteristic register event
- *      - Descriptor register event
- */
-void gatt_svr_register_cb(struct ble_gatt_register_ctxt *ctxt, void *arg) {
-    /* Local variables */
-    char buf[BLE_UUID_STR_LEN];
-
-    /* Handle GATT attributes register events */
-    switch (ctxt->op) {
-
-    /* Service register event */
-    case BLE_GATT_REGISTER_OP_SVC:
-        ESP_LOGD(TAG, "registered service %s with handle=%d",
-                 ble_uuid_to_str(ctxt->svc.svc_def->uuid, buf),
-                 ctxt->svc.handle);
-        break;
-
-    /* Characteristic register event */
-    case BLE_GATT_REGISTER_OP_CHR:
-        ESP_LOGD(TAG,
-                 "registering characteristic %s with "
-                 "def_handle=%d val_handle=%d",
-                 ble_uuid_to_str(ctxt->chr.chr_def->uuid, buf),
-                 ctxt->chr.def_handle, ctxt->chr.val_handle);
-        break;
-
-    /* Descriptor register event */
-    case BLE_GATT_REGISTER_OP_DSC:
-        ESP_LOGD(TAG, "registering descriptor %s with handle=%d",
-                 ble_uuid_to_str(ctxt->dsc.dsc_def->uuid, buf),
-                 ctxt->dsc.handle);
-        break;
-
-    /* Unknown event */
-    default:
-        assert(0);
-        break;
+void heart_rate_ind_task(void *pvParameter) {
+    while (1) {
+        send_heart_rate_indication();
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
     }
 }
 
-
+/*
+ *  Action when someone subscribes to characteristics
+ */ 
 void gatt_svr_subscribe_cb(struct ble_gap_event *event) {
     /* Check connection handle */
     if (event->subscribe.conn_handle != BLE_HS_CONN_HANDLE_NONE) {
@@ -254,16 +220,16 @@ void gatt_svr_subscribe_cb(struct ble_gap_event *event) {
         heart_rate_chr_conn_handle = event->subscribe.conn_handle;
         heart_rate_chr_conn_handle_inited = true;
         heart_rate_ind_status = event->subscribe.cur_indicate;
-    }
-}
 
-void heart_rate_ind_task(void *pvParameter) {
-    while (1) {
-        // Call the function to send the heart rate indication
-        send_heart_rate_indication();
-        
-        // Delay for 1 second (1000 ms)
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        /* Create a task to send heart rate indication */
+        if (heart_rate_ind_status && xHeartIndicateTask == NULL) {
+            ESP_LOGI(TAG, "Start heart rate indication task");
+            xTaskCreate(heart_rate_ind_task, "HeartRateIndTask", 4096, NULL, 5, &xHeartIndicateTask);
+        } else {
+            ESP_LOGI(TAG, "Stop heart rate indication task");
+            vTaskDelete(xHeartIndicateTask);
+            xHeartIndicateTask = NULL;
+        }
     }
 }
 
@@ -272,6 +238,7 @@ void heart_rate_ind_task(void *pvParameter) {
  *      1. Initialize GATT service
  *      2. Update NimBLE host GATT services counter
  *      3. Add GATT services to server
+ *      4. Create a task to send heart rate indication
  */
 int gatt_svc_init(void) {
     /* Local variables */
@@ -291,8 +258,6 @@ int gatt_svc_init(void) {
     if (rc != 0) {
         return rc;
     }
-
-    xTaskCreate(heart_rate_ind_task, "HeartRateIndTask", 2048, NULL, 5, NULL);
 
     return 0;
 }
