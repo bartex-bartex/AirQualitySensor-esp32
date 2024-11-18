@@ -9,9 +9,11 @@
 #include "http_client.h"
 #include "config_manager.h"
 #include "ble_manager.h"
+#include "mqtt.h"
 
 // only http -> port 80
 char* url = "http://example.com/";
+char* server_url = "mqtt://192.168.11.155/";
 
 static const char *TAG = "APP_MAIN";
 
@@ -41,8 +43,10 @@ void app_main() {
     }
 
     ESP_LOGI(TAG, "Connected to WiFi");
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
 
     // Main program loop
+    mqtt_init(server_url);
     while (1){
         vTaskDelay(1000 / portTICK_PERIOD_MS);
     }
