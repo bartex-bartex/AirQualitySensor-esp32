@@ -9,9 +9,11 @@
 #include "http_client.h"
 #include "config_manager.h"
 #include "ble_manager.h"
+#include "mqtt.h"
 
 // only http -> port 80
 char* url = "http://example.com/";
+char* server_url = "mqtt://192.168.33.9/";
 
 static const char *TAG = "APP_MAIN";
 
@@ -58,7 +60,11 @@ void app_main() {
     // TODO: Handle disconnection error
     // TODO: Handle too fast request before getting IP assigned
 
+    mqtt_init(server_url);
 
+    while(1) {
+
+    }
 
     config_cleanup();
 }
