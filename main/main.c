@@ -28,37 +28,23 @@ void app_main() {
 
     config_init();
     config_wifi_load();
-    
+
     wifi_init_sta();
+    xTaskCreate(wifi_connect, "wifi_connect", 4096, NULL, 5, NULL);
 
-    bool connected = false;
-    const char* ssid;
-    const char* pass;
+    ble_init();
+    xTaskCreate(nimble_host_task, "NimBLE", 4096, NULL, 5, &xBleHandle);
 
-    while (1) {
-        ESP_LOGI(TAG, "Update credentials");
-        ssid = config_wifi_get_ssid();
-        pass = config_wifi_get_pass();
+    while (!isConnected) {
 
-        ESP_LOGI(TAG, "SSID: %s, PASS: %s", ssid, pass);
-        connected = wifi_connect(ssid, pass);
-        if (connected) {
-            ESP_LOGI(TAG, "Connected to Wi-Fi");
-            break;
-        }
-
-        ble_init();
-
-        xTaskCreate(nimble_host_task, "NimBLE", 4096, NULL, 5, &xBleHandle);
-
-        vTaskDelay(45000 / portTICK_PERIOD_MS);
-
-        nimble_host_stop_task();
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
     }
     // TODO: Handle disconnection error
     // TODO: Handle too fast request before getting IP assigned
 
+    ESP_LOGI(TAG, "Connected to WiFi");
 
+    nimble_host_stop_task();
 
     config_cleanup();
 }
