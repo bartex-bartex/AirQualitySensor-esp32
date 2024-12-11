@@ -29,7 +29,8 @@ void app_main() {
     ESP_ERROR_CHECK(ret); // call abort when not ESP_OK
 
     config_init();
-    config_wifi_load();
+    config_wifi_ssid_load();
+    config_wifi_pass_load();
 
     wifi_init_sta();
     xTaskCreate(wifi_connect, "wifi_connect", 4096, NULL, 5, NULL);
