@@ -72,16 +72,6 @@ void nimble_host_task(void *param) {
 void nimble_host_stop_task() {
     ESP_LOGI(TAG, "Cleaning up NimBLE host stack");
 
-    // // NOT NEEDED
-    // ble_gap_adv_stop();
-
-    // for (int i = 0; i < BLE_MAX_CONNECTIONS; i++) {
-    //     if (ble_gap_conn_active(i)) {
-    //         ble_gap_terminate(i, BLE_ERR_REM_USER_CONN_TERM);
-    //         vTaskDelay(100 / portTICK_PERIOD_MS); // Ensure the termination is processed
-    //     }
-    // } 
-
     /* Stop the NimBLE host */
     nimble_port_stop();
 
