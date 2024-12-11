@@ -59,7 +59,7 @@ void wifi_event_handler(void* arg, esp_event_base_t event_base, int32_t event_id
 
 void wifi_connect(){
 
-    while (!wasConnected){
+    while(!isConnected){
         // create wifi config 
         // for some reason it is tough to pass |const char*|, best way is to use memcpy / strcpy
         wifi_config_t wifi_config = {
@@ -81,20 +81,15 @@ void wifi_connect(){
         ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config)); // set wifi config
         ESP_ERROR_CHECK(esp_wifi_start()); // start wifi
 
-        int times = 4;
-        while (times && !isConnected){
-            ESP_LOGI(TAG, "Connecting to ssid: %s, pass: %s , %d try" , ssid, pass, 5 - times);
-            esp_wifi_connect();
+        ESP_LOGI(TAG, "Connecting to ssid: %s, pass: %s" , ssid, pass);
+        esp_wifi_connect();
 
-            vTaskDelay(3000 / portTICK_PERIOD_MS);
+        vTaskDelay(5000 / portTICK_PERIOD_MS);
 
-            if (times == 0){
-                ESP_LOGE(TAG, "Failed to connect to ssid: %s, pass: %s", ssid, pass);
-                esp_wifi_disconnect();
-                esp_wifi_stop();
-            }
-
-            times--;
+        if (!isConnected){
+            ESP_LOGE(TAG, "Failed to connect to ssid: %s, pass: %s", ssid, pass);
+            esp_wifi_disconnect();
+            esp_wifi_stop();
         }
     }
 
