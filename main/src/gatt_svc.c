@@ -18,20 +18,30 @@
 static const char* TAG = "GATT_SVR";
 
 /* Private function declarations */
-static void wifi_cred_chr_access(uint16_t conn_handle, uint16_t attr_handle,
+static void wifi_cred_svc_access(uint16_t conn_handle, uint16_t attr_handle,
                           struct ble_gatt_access_ctxt *ctxt, void *arg);
+// static void wifi_ssid_chr_access(uint16_t conn_handle, uint16_t attr_handle,
+//                           struct ble_gatt_access_ctxt *ctxt, void *arg);
 
+// static void wifi_pass_chr_access(uint16_t conn_handle, uint16_t attr_handle,
+//                           struct ble_gatt_access_ctxt *ctxt, void *arg);
 
 /* Private variables */
 
 /* Wifi service */
 static const ble_uuid16_t wifi_cred_svc_uuid = 
     BLE_UUID128_INIT(0x23, 0xd1, 0xbc, 0xea, 0x5f, 0x78, 0x23, 0x15, 0xde, 0xef,
-                     0x12, 0x12, 0x25, 0x15, 0x00, 0x01);;
-static uint16_t wifi_cred_chr_val_handle;
-static const ble_uuid128_t wifi_cred_chr_uuid =
+                     0x12, 0x12, 0x25, 0x15, 0x00, 0x01);
+
+static uint16_t wifi_ssid_chr_val_handle;
+static const ble_uuid128_t wifi_ssid_chr_uuid =
     BLE_UUID128_INIT(0x23, 0xd1, 0xbc, 0xea, 0x5f, 0x78, 0x23, 0x15, 0xde, 0xef,
                      0x12, 0x12, 0x25, 0x15, 0x00, 0x02);
+
+static uint16_t wifi_pass_chr_val_handle;
+static const ble_uuid128_t wifi_pass_chr_uuid =
+    BLE_UUID128_INIT(0x23, 0xd1, 0xbc, 0xea, 0x5f, 0x78, 0x23, 0x15, 0xde, 0xef,
+                     0x12, 0x12, 0x25, 0x15, 0x00, 0x03);
 
 /* GATT services table */
 static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
@@ -40,12 +50,22 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
         .type = BLE_GATT_SVC_TYPE_PRIMARY,
         .uuid = &wifi_cred_svc_uuid.u,
         .characteristics =
-            (struct ble_gatt_chr_def[]){/* Wifi cred characteristic */
-                                        {.uuid = &wifi_cred_chr_uuid.u,
-                                         .access_cb = wifi_cred_chr_access,
-                                         .flags = BLE_GATT_CHR_F_WRITE,
-                                         .val_handle = &wifi_cred_chr_val_handle},
-                                        {0}},
+            (struct ble_gatt_chr_def[])
+            {
+                {/* Wifi ssid characteristic */
+                    .uuid = &wifi_ssid_chr_uuid.u,
+                    .access_cb = wifi_cred_svc_access,
+                    .flags = BLE_GATT_CHR_F_WRITE,
+                    .val_handle = &wifi_ssid_chr_val_handle},
+                {/* Wifi pass characteristic */
+                    .uuid = &wifi_pass_chr_uuid.u,
+                    .access_cb = wifi_cred_svc_access,
+                    .flags = BLE_GATT_CHR_F_WRITE,
+                    .val_handle = &wifi_pass_chr_val_handle},
+                {
+                    0 /* No more characteristics. */
+                }
+            },
     },
 
     {
@@ -53,7 +73,7 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
     },
 };
 
-static void wifi_cred_chr_access(uint16_t conn_handle, uint16_t attr_handle,
+static void wifi_cred_svc_access(uint16_t conn_handle, uint16_t attr_handle,
                             struct ble_gatt_access_ctxt *ctxt, void *arg) {
 
     /* Handle access events */
@@ -69,8 +89,7 @@ static void wifi_cred_chr_access(uint16_t conn_handle, uint16_t attr_handle,
             ESP_LOGI(TAG, "Characteristic write by nimble stack with no connection; attr_handle=%d", attr_handle);
         }
 
-        /* Verify attribute handle */
-        if (attr_handle == wifi_cred_chr_val_handle) {
+        if (attr_handle == wifi_ssid_chr_val_handle) {
             // Allocate a buffer to hold the incoming data
             ESP_LOGI(TAG, "Received data length: %d", ctxt->om->om_len);
 
@@ -78,40 +97,19 @@ static void wifi_cred_chr_access(uint16_t conn_handle, uint16_t attr_handle,
             memcpy(buffer, ctxt->om->om_data, ctxt->om->om_len);
             buffer[ctxt->om->om_len] = '\0'; // Null-terminate the buffer
 
-            ESP_LOGI(TAG, "Received data: %s", buffer);
+            ESP_LOGI(TAG, "Received (ssid) data: %s", buffer);
 
-            // Parse the JSON string
-            cJSON *json = cJSON_Parse(buffer);
-            if (json == NULL) {
-                ESP_LOGE(TAG, "Failed to parse JSON: %s", cJSON_GetErrorPtr());
-                return; // Handle the error appropriately
-            }
+            //config_wifi_save(ssid_item->valuestring, pass_item->valuestring);
 
-            // Extract SSID and password items
-            cJSON *ssid_item = cJSON_GetObjectItem(json, "ssid");
-            cJSON *pass_item = cJSON_GetObjectItem(json, "pass");
+        } else if (attr_handle == wifi_pass_chr_val_handle) {
+            // Allocate a buffer to hold the incoming data
+            ESP_LOGI(TAG, "Received data length: %d", ctxt->om->om_len);
 
-            // Check if the extracted items are valid
-            if (ssid_item != NULL && cJSON_IsString(ssid_item) && ssid_item->valuestring != NULL) {
-                // Process SSID
-                ESP_LOGI(TAG, "SSID: %s", ssid_item->valuestring);
-            } else {
-                ESP_LOGE(TAG, "SSID not found or not a string");
-            }
+            char buffer[ctxt->om->om_len + 1]; // +1 for null-termination
+            memcpy(buffer, ctxt->om->om_data, ctxt->om->om_len);
+            buffer[ctxt->om->om_len] = '\0'; // Null-terminate the buffer
 
-            if (pass_item != NULL && cJSON_IsString(pass_item) && pass_item->valuestring != NULL) {
-                // Process Password
-                ESP_LOGI(TAG, "Password: %s", pass_item->valuestring);
-            } else {
-                ESP_LOGE(TAG, "Password not found or not a string");
-            }
-
-            config_wifi_save(ssid_item->valuestring, pass_item->valuestring);
-
-            // Clean up the cJSON object
-            cJSON_Delete(json);
-
-            // return 0;
+            ESP_LOGI(TAG, "Received (pass) data: %s", buffer);
         }
     }
 }
