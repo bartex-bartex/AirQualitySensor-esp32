@@ -12,9 +12,7 @@
 #include "mqtt.h"
 #include "configuration_mode.h"
 
-// only http -> port 80
-char* url = "http://example.com/";
-char* server_url = "mqtt://192.168.11.155/";
+//192.168.11.155
 
 static TaskHandle_t xConfigure = NULL;
 
@@ -47,7 +45,7 @@ void app_main() {
     vTaskDelay(1000 / portTICK_PERIOD_MS);
 
     // Main program loop
-    mqtt_init(server_url);
+    mqtt_init(config_mqtt_get_uri());
     while (1){
         vTaskDelay(1000 / portTICK_PERIOD_MS);
     }

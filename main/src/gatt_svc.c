@@ -20,6 +20,9 @@ static const char* TAG = "GATT_SVR";
 /* Private function declarations */
 static void wifi_cred_svc_access(uint16_t conn_handle, uint16_t attr_handle,
                           struct ble_gatt_access_ctxt *ctxt, void *arg);
+
+static void mqtt_svc_access(uint16_t conn_handle, uint16_t attr_handle,
+                          struct ble_gatt_access_ctxt *ctxt, void *arg);
 // static void wifi_ssid_chr_access(uint16_t conn_handle, uint16_t attr_handle,
 //                           struct ble_gatt_access_ctxt *ctxt, void *arg);
 
@@ -43,6 +46,16 @@ static const ble_uuid128_t wifi_pass_chr_uuid =
     BLE_UUID128_INIT(0x23, 0xd1, 0xbc, 0xea, 0x5f, 0x78, 0x23, 0x15, 0xde, 0xef,
                      0x12, 0x12, 0x25, 0x15, 0x00, 0x03);
 
+/* MQTT service */
+static const ble_uuid16_t mqtt_svc_uuid = 
+    BLE_UUID128_INIT(0x23, 0xd1, 0xbc, 0xea, 0x5f, 0x78, 0x23, 0x15, 0xde, 0xef,
+                     0x12, 0x12, 0x25, 0x15, 0x00, 0x04);
+
+static uint16_t mqtt_uri_chr_val_handle;
+static const ble_uuid128_t mqtt_uri_chr_uuid =
+    BLE_UUID128_INIT(0x23, 0xd1, 0xbc, 0xea, 0x5f, 0x78, 0x23, 0x15, 0xde, 0xef,
+                     0x12, 0x12, 0x25, 0x15, 0x00, 0x05);
+
 /* GATT services table */
 static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
     /* Wifi cred service */
@@ -65,7 +78,23 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
                 {
                     0 /* No more characteristics. */
                 }
-            },
+            }
+    },
+    {
+        .type = BLE_GATT_SVC_TYPE_PRIMARY,
+        .uuid = &mqtt_svc_uuid.u,
+        .characteristics =
+            (struct ble_gatt_chr_def[])
+            {
+                {/* Mqtt characteristic */
+                    .uuid = &mqtt_uri_chr_uuid.u,
+                    .access_cb = mqtt_svc_access,
+                    .flags = BLE_GATT_CHR_F_WRITE,
+                    .val_handle = &mqtt_uri_chr_val_handle},
+                {
+                    0 /* No more characteristics. */
+                }
+            }
     },
 
     {
@@ -112,6 +141,38 @@ static void wifi_cred_svc_access(uint16_t conn_handle, uint16_t attr_handle,
             config_wifi_pass_save(buffer);
 
             ESP_LOGI(TAG, "Received (pass) data: %s", buffer);
+        }
+    }
+}
+
+static void mqtt_svc_access(uint16_t conn_handle, uint16_t attr_handle,
+                            struct ble_gatt_access_ctxt *ctxt, void *arg) {
+
+    /* Handle access events */
+    /* Note: Wifi cred characteristic is write only */
+    switch (ctxt->op) {
+
+    /* Write characteristic event */
+    case BLE_GATT_ACCESS_OP_WRITE_CHR:
+        /* Verify connection handle */
+        if (conn_handle != BLE_HS_CONN_HANDLE_NONE) {
+            ESP_LOGI(TAG, "Mqtt write; conn_handle=%d, attr_handle=%d", conn_handle, attr_handle);
+        } else {
+            ESP_LOGI(TAG, "Characteristic write by nimble stack with no connection; attr_handle=%d", attr_handle);
+        }
+
+        if (attr_handle == mqtt_uri_chr_val_handle) {
+            // Allocate a buffer to hold the incoming data
+            ESP_LOGI(TAG, "Received data length: %d", ctxt->om->om_len);
+
+            char buffer[ctxt->om->om_len + 1]; // +1 for null-termination
+            memcpy(buffer, ctxt->om->om_data, ctxt->om->om_len);
+            buffer[ctxt->om->om_len] = '\0'; // Null-terminate the buffer
+
+            ESP_LOGI(TAG, "Received (MQTT uri) data: %s", buffer);
+
+            config_mqtt_uri_save(buffer);
+
         }
     }
 }

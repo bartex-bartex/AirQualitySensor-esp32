@@ -147,6 +147,45 @@ bool config_wifi_pass_save(const char* pass_param) {
     return true;
 }
 
+bool config_mqtt_uri_save(const char* uri_param) {
+    ESP_LOGI(TAG, "Saving MQTT uri configuration");
+
+    esp_err_t err;
+    err = nvs_set_str(my_nvs_handle, "mqtt_uri", uri_param);
+
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Error (%s) saving MQTT uri to NVS", esp_err_to_name(err));
+        return false;
+    }
+
+    nvs_commit(my_nvs_handle);
+
+    ESP_LOGI(TAG, "MQTT uri saved");
+    return true;
+}
+
+const char* config_mqtt_get_uri(void){
+    esp_err_t err;
+    size_t required_size;
+
+    err = nvs_get_str(my_nvs_handle, "mqtt_uri", NULL, &required_size);
+    if (err == ESP_ERR_NVS_NOT_FOUND){
+        ESP_LOGI(TAG, "No MQTT uri stored in NVS - using default");
+        return '\0';
+    }
+
+    char* uri = (char*)malloc(required_size);
+    err = nvs_get_str(my_nvs_handle, "mqtt_uri", uri, &required_size);
+
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Error (%s) reading MQTT uri from NVS", esp_err_to_name(err));
+        return '\0';
+    }
+
+    ESP_LOGI("CONFIG", "MQTT uri loaded: %s", uri);
+    return uri;
+}
+
 const char* config_wifi_get_ssid(void) {
     return ssid;
 }

@@ -9,6 +9,8 @@ static EventGroupHandle_t mqtt_event_group;
 const int MQTT_CONNECTED_BIT = BIT0;
 
 static const char* TAG = "MQTT";
+static const char* base = "mqtt://";
+static const char* suffix = "/";
 
 static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data)
 {
@@ -58,10 +60,22 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
 
 // mosquitto_sub.exe -h localhost -t "test/qos1" -v
 void mqtt_init(char* uri){
+    if (uri == NULL){
+        ESP_LOGE(TAG, "MQTT URI is NULL");
+        return;
+    }
+
+    size_t buffer_size = strlen(base) + strlen(uri) + strlen(suffix);
+    char* result = (char*)malloc(buffer_size);
+
+    sprintf(result, "%s%s%s", base, uri, suffix);
+
+    ESP_LOGI(TAG, "MQTT URI: %s", result);
+
     mqtt_event_group = xEventGroupCreate();
 
     esp_mqtt_client_config_t mqtt_cfg = {
-        .broker.address.uri = uri,
+        .broker.address.uri = result,
     };
 
     esp_mqtt_client_handle_t client = esp_mqtt_client_init(&mqtt_cfg);
@@ -82,4 +96,6 @@ void mqtt_init(char* uri){
 
         vTaskDelay(1000 / portTICK_PERIOD_MS);
     }
+
+    free(result);
 }
