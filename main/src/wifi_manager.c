@@ -86,7 +86,7 @@ void wifi_connect(){
             ESP_LOGI(TAG, "Connecting to ssid: %s, pass: %s , %d try" , ssid, pass, 5 - times);
             esp_wifi_connect();
 
-            vTaskDelay(5000 / portTICK_PERIOD_MS);
+            vTaskDelay(3000 / portTICK_PERIOD_MS);
 
             if (times == 0){
                 ESP_LOGE(TAG, "Failed to connect to ssid: %s, pass: %s", ssid, pass);

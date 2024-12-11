@@ -62,13 +62,14 @@ bool config_wifi_ssid_load() {
     ESP_LOGI(TAG, "Loading Wi-Fi configuration");
 
     esp_err_t err;
-    err = nvs_get_str(my_nvs_handle, "ssid", NULL, ssid);
+    size_t required_size;
+    err = nvs_get_str(my_nvs_handle, "ssid", ssid, &required_size);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Error (%s) reading ssid from NVS", esp_err_to_name(err));
         return false;
     }
 
-    ESP_LOGI("CONFIG", "Config loaded");
+    ESP_LOGI("CONFIG", "SSID loaded: %s", ssid);
     return true;
 }
 
@@ -76,13 +77,14 @@ bool config_wifi_pass_load() {
     ESP_LOGI(TAG, "Loading Wi-Fi configuration");
 
     esp_err_t err;
-    err = nvs_get_str(my_nvs_handle, "pass", NULL, pass);
+    size_t required_size;
+    err = nvs_get_str(my_nvs_handle, "pass", pass, &required_size);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Error (%s) reading ssid from NVS", esp_err_to_name(err));
         return false;
     }
 
-    ESP_LOGI("CONFIG", "Config loaded");
+    ESP_LOGI("CONFIG", "Password loaded: %s", pass);
     return true;
 }
 
@@ -91,7 +93,7 @@ bool config_wifi_ssid_save(const char* ssid_param) {
 
     esp_err_t err;
     strcpy(ssid, ssid_param);
-    err = nvs_set_str(my_nvs_handle, "ssid", ssid);
+    err = nvs_set_str(my_nvs_handle, "ssid", ssid_param);
 
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Error (%s) saving ssid to NVS", esp_err_to_name(err));
@@ -107,7 +109,7 @@ bool config_wifi_pass_save(const char* pass_param) {
 
     esp_err_t err;
     strcpy(pass, pass_param);
-    err = nvs_set_str(my_nvs_handle, "pass", pass);
+    err = nvs_set_str(my_nvs_handle, "pass", pass_param);
 
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Error (%s) saving password to NVS", esp_err_to_name(err));
