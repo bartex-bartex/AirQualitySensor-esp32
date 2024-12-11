@@ -99,7 +99,7 @@ static void wifi_cred_svc_access(uint16_t conn_handle, uint16_t attr_handle,
 
             ESP_LOGI(TAG, "Received (ssid) data: %s", buffer);
 
-            //config_wifi_save(ssid_item->valuestring, pass_item->valuestring);
+            config_wifi_ssid_save(buffer);
 
         } else if (attr_handle == wifi_pass_chr_val_handle) {
             // Allocate a buffer to hold the incoming data
@@ -108,6 +108,8 @@ static void wifi_cred_svc_access(uint16_t conn_handle, uint16_t attr_handle,
             char buffer[ctxt->om->om_len + 1]; // +1 for null-termination
             memcpy(buffer, ctxt->om->om_data, ctxt->om->om_len);
             buffer[ctxt->om->om_len] = '\0'; // Null-terminate the buffer
+
+            config_wifi_pass_save(buffer);
 
             ESP_LOGI(TAG, "Received (pass) data: %s", buffer);
         }
