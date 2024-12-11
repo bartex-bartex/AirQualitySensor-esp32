@@ -62,6 +62,8 @@ void wifi_connect(){
     while(!isConnected){
         // create wifi config 
         // for some reason it is tough to pass |const char*|, best way is to use memcpy / strcpy
+        ESP_LOGI(TAG, "Initialize connection");
+
         wifi_config_t wifi_config = {
             .sta = {
                 // Use memcpy to copy the ssid and password into the struct
@@ -87,9 +89,10 @@ void wifi_connect(){
         vTaskDelay(5000 / portTICK_PERIOD_MS);
 
         if (!isConnected){
-            ESP_LOGE(TAG, "Failed to connect to ssid: %s, pass: %s", ssid, pass);
-            esp_wifi_disconnect();
-            esp_wifi_stop();
+            ESP_LOGI(TAG, "Failed to connect to ssid: %s, pass: %s", ssid, pass);
+            // Below 2 seems to be unnecessary
+            // esp_wifi_disconnect();
+            // esp_wifi_stop();
         }
     }
 

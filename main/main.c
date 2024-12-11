@@ -10,14 +10,15 @@
 #include "config_manager.h"
 #include "ble_manager.h"
 #include "mqtt.h"
+#include "configuration_mode.h"
 
 // only http -> port 80
 char* url = "http://example.com/";
 char* server_url = "mqtt://192.168.11.155/";
 
-static const char *TAG = "APP_MAIN";
+static TaskHandle_t xConfigure = NULL;
 
-static TaskHandle_t xBleHandle = NULL;
+static const char *TAG = "APP_MAIN";
 
 void app_main() {
     esp_err_t ret = nvs_flash_init();  // key-value pair memory
@@ -35,8 +36,7 @@ void app_main() {
     wifi_init_sta();
     xTaskCreate(wifi_connect, "wifi_connect", 4096, NULL, 5, NULL);
 
-    ble_init();
-    xTaskCreate(nimble_host_task, "NimBLE", 4096, NULL, 5, &xBleHandle);
+    xTaskCreate(configure, "configure", 4096, NULL, 5, &xConfigure);
 
     while (!isConnected) {
 
@@ -51,8 +51,6 @@ void app_main() {
     while (1){
         vTaskDelay(1000 / portTICK_PERIOD_MS);
     }
-
-    nimble_host_stop_task();
 
     config_cleanup();
 }

@@ -202,7 +202,7 @@ static int gap_event_handler(struct ble_gap_event *event, void *arg) {
                  event->disconnect.reason);
 
         /* Restart advertising */
-        // start_advertising();
+        start_advertising();
         return rc;
 
     /* Connection parameters update event */
