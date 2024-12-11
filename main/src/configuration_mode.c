@@ -34,10 +34,11 @@ void configure(void* pvParameters){
             nimble_host_stop_task();
             xBleHandle = NULL;
 
-            if (isConnected){
-                // reboot
-                esp_restart();
-            }
+            // now I assume that user clicks "reboot" button
+            // if (isConnected){
+            //     // reboot
+            //     esp_restart();
+            // }
         }
 
         vTaskDelay(1000 / portTICK_PERIOD_MS);
