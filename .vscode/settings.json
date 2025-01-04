@@ -44,6 +44,7 @@
         "common.h": "c",
         "esp_hidh_nimble.h": "c",
         "gpio.h": "c",
-        "configuration_mode.h": "c"
+        "configuration_mode.h": "c",
+        "mqtt.h": "c"
     }
 }
