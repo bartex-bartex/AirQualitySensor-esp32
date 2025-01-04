@@ -147,6 +147,45 @@ bool config_wifi_pass_save(const char* pass_param) {
     return true;
 }
 
+bool config_user_id_save(const char* user_id_param){
+    ESP_LOGI(TAG, "Saving User ID configuration");
+
+    esp_err_t err;
+    err = nvs_set_str(my_nvs_handle, "user_id", user_id_param);
+
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Error (%s) saving User ID to NVS", esp_err_to_name(err));
+        return false;
+    }
+
+    nvs_commit(my_nvs_handle);
+
+    ESP_LOGI(TAG, "User ID saved");
+    return true;
+}
+
+const char* config_user_id_get(void){
+    esp_err_t err;
+    size_t required_size;
+
+    err = nvs_get_str(my_nvs_handle, "user_id", NULL, &required_size);
+    if (err == ESP_ERR_NVS_NOT_FOUND){
+        ESP_LOGI(TAG, "No User ID stored in NVS - using default");
+        return '\0';
+    }
+
+    char* uri = (char*)malloc(required_size);
+    err = nvs_get_str(my_nvs_handle, "user_id", uri, &required_size);
+
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Error (%s) reading User ID from NVS", esp_err_to_name(err));
+        return '\0';
+    }
+
+    ESP_LOGI("CONFIG", "User ID loaded: %s", uri);
+    return uri;
+}
+
 bool config_mqtt_uri_save(const char* uri_param) {
     ESP_LOGI(TAG, "Saving MQTT uri configuration");
 

@@ -13,7 +13,7 @@
 
 #include "mqtt.h"
 
-// mosquitto_pub.exe -h localhost -t esp/config/time_interval -m 2000
+// mosquitto_pub.exe -h localhost -t 60/30:AE:A4:E9:EE:E0/config/time_interval -m 2000
 // mosquitto_sub.exe -h localhost -t "test/qos1" -v
 
 volatile int time_interval = 5000;
@@ -26,6 +26,9 @@ static const char* TAG = "MQTT";
 static const char* base = "mqtt://";
 static const char* suffix = "/";
 
+static char* user_id;
+static char* mac;
+
 #ifndef APP_CPU_NUM
 #define APP_CPU_NUM PRO_CPU_NUM
 #endif
@@ -36,6 +39,18 @@ static const char* suffix = "/";
 #define SENSOR_TYPE DHT_TYPE_AM2301
 
 #define MQ135_ADC_CHANNEL ADC1_CHANNEL_6  // GPIO34 is ADC1 Channel 6
+
+char* generate_mqtt_topic(const char *suffix) {
+    static char topic[64]; // Static buffer to hold the topic string
+
+    memset(topic, 0, sizeof(topic)); 
+
+    // Format the topic string
+    snprintf(topic, sizeof(topic), "%s/%s/%s", user_id, mac, suffix);
+
+    // Return the formatted topic string
+    return topic;
+}
 
 // SENSORS part
 
@@ -51,13 +66,15 @@ void dht_test(void *pvParameters)
     {
         if (dht_read_float_data(SENSOR_TYPE, CONFIG_EXAMPLE_DATA_GPIO, &humidity, &temperature) == ESP_OK) {
             ESP_LOGI(TAG, "Humidity: %.1f%% Temp: %.1fC", humidity, temperature);
+            
             char temp_str[16];
             snprintf(temp_str, sizeof(temp_str), "%.1f", temperature);
-            esp_mqtt_client_publish(client, "esp/temp", temp_str, 0, 1, 0);
+            esp_mqtt_client_publish(client, generate_mqtt_topic("temp"), temp_str, 0, 1, 0);
 
             char humidity_str[16];
             snprintf(humidity_str, sizeof(humidity_str), "%.1f", humidity);
-            esp_mqtt_client_publish(client, "esp/humidity", humidity_str, 0, 1, 0);
+            esp_mqtt_client_publish(client, generate_mqtt_topic("humidity"), humidity_str, 0, 1, 0);
+
         } else {
             ESP_LOGE(TAG, "Could not read data from sensor\n");
         }
@@ -104,7 +121,8 @@ void bmp280_test(void *pvParameters)
 
         char pressure_str[16];
         snprintf(pressure_str, sizeof(pressure_str), "%.2f", pressure);
-        esp_mqtt_client_publish(client, "esp/pressure", pressure_str, 0, 1, 0);
+        esp_mqtt_client_publish(client, generate_mqtt_topic("pressure"), pressure_str, 0, 1, 0);
+
 
         vTaskDelay(pdMS_TO_TICKS(time_interval));
     }
@@ -126,7 +144,8 @@ void mq135_test(void *pvParameters){
 
         char raw_adc_value_str[16];
         snprintf(raw_adc_value_str, sizeof(raw_adc_value_str), "%d", raw_adc_value);
-        esp_mqtt_client_publish(client, "esp/gas", raw_adc_value_str, 0, 1, 0);
+        esp_mqtt_client_publish(client, generate_mqtt_topic("gas"), raw_adc_value_str, 0, 1, 0);
+
 
         vTaskDelay(pdMS_TO_TICKS(time_interval)); // Delay 1 second
     }
@@ -144,8 +163,10 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
     case MQTT_EVENT_CONNECTED:
         ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
         xEventGroupSetBits(mqtt_event_group, MQTT_CONNECTED_BIT);
-        int msg_id = esp_mqtt_client_subscribe(client, "esp/config/time_interval", 0);
-    ESP_LOGI(TAG, "Subscribed to topic, msg_id=%d", msg_id);
+
+        int msg_id = esp_mqtt_client_subscribe(client, generate_mqtt_topic("config/time_interval"), 0);
+
+        ESP_LOGI(TAG, "Subscribed to topic, msg_id=%d", msg_id);
         break;
     case MQTT_EVENT_DISCONNECTED:
         ESP_LOGI(TAG, "MQTT_EVENT_DISCONNECTED");
@@ -165,7 +186,8 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
         ESP_LOGI(TAG, "TOPIC=%.*s\r\n", event->topic_len, event->topic);
         ESP_LOGI(TAG, "DATA=%.*s\r\n", event->data_len, event->data);
 
-        if (strncmp(event->topic, "esp/config/time_interval", event->topic_len) == 0) {
+
+        if (strncmp(event->topic, generate_mqtt_topic("config/time_interval"), event->topic_len) == 0) {
             ESP_LOGI(TAG, "Updating time intervale to: %.*s ms", event->data_len, event->data);
             
             char data[32] = {0}; // Adjust the size as needed
@@ -195,17 +217,34 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
     }
 }
 
-void mqtt_init(char* uri){
+void mqtt_init(char* uri, char* user_id_param, char* mac_param){
+    ESP_LOGI(TAG, "Initializing MQTT");
+
+    if (user_id_param == NULL){
+        ESP_LOGE(TAG, "User ID is NULL");
+        return;
+    }
+
+    user_id = user_id_param;
+
+    if (mac_param == NULL){
+        ESP_LOGE(TAG, "MAC is NULL");
+        return;
+    }
+
+    mac = mac_param;
+
     if (uri == NULL){
         ESP_LOGE(TAG, "MQTT URI is NULL");
         return;
     }
 
+    ESP_LOGI(TAG, "user_id: %s", user_id);
+    ESP_LOGI(TAG, "mac: %s", mac);
+
     size_t buffer_size = strlen(base) + strlen(uri) + strlen(suffix);
     char* result = (char*)malloc(buffer_size);
-
     sprintf(result, "%s%s%s", base, uri, suffix);
-
     ESP_LOGI(TAG, "MQTT URI: %s", result);
 
     mqtt_event_group = xEventGroupCreate();

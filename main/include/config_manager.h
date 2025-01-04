@@ -12,8 +12,12 @@ bool config_wifi_ssid_load(void);
 bool config_wifi_pass_load(void);
 bool config_wifi_ssid_save(const char* ssid_param);
 bool config_wifi_pass_save(const char* pass_param);
+
 const char* config_mqtt_get_uri(void);
 bool config_mqtt_uri_save(const char* uri_param);
+
+const char* config_user_id_get(void);
+bool config_user_id_save(const char* user_id_param);
 
 // Getters
 const char* config_wifi_get_ssid(void);
